@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 		return(2);
 	}
 	/* Grab a packet */
-	for(i=0;i<5;i++){
+	while(1){
 		packet = pcap_next(handle, &header);
 		
 		ethh =(struct ether_header *)packet;
@@ -62,8 +62,8 @@ int main(int argc, char *argv[])
 		iph =(struct ip *)packet;
 		packet += sizeof(struct ip);
 
-		tcph =(struct tcp *)packet;
-		
+		tcph =(struct tcphdr *)packet;
+		packet += sizeof(struct tcphdr);
 		printf("=============================\n");
 		printf("eth.smac = "); for(j=0;j<6;j++)printf("%02x:",ethh->ether_shost[j]); printf("\n");
 		printf("eth.dmac = "); for(j=0;j<6;j++)printf("%02x:",ethh->ether_dhost[j]); printf("\n");
@@ -73,7 +73,17 @@ int main(int argc, char *argv[])
 
 		printf("tcp.sport = %d\n",ntohs(tcph->th_sport));
 		printf("tcp.dport = %d\n",ntohs(tcph->th_dport));
-		printf("=============================\n");
+		
+		printf("data:\n");
+		for(j=0;j<(header.len)-sizeof(struct ether_header)-
+					sizeof(struct ip)-sizeof(struct tcphdr);j++){
+			printf("%02x ",*packet);
+			packet++;
+
+			if(j % 20 == 0 && j!=0)
+			printf("\n");
+		}
+		printf("\n=============================\n");
 	}
 	pcap_close(handle);	
 	return(0);
